@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="onScrollListener"
+            type="androidx.recyclerview.widget.RecyclerView.OnScrollListener" />
+
+        <variable
+            name="adapter"
+            type="com.l3h4i15.unsplashclient.ui.collectionpictures.CollectionPicturesRecyclerAdapter" />
+    </data>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.collectionpictures.CollectionPicturesFragment">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:adapter="@{adapter}"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:onScrollListener="@{onScrollListener}"
+            app:spanCount="@integer/pictures_span_count"
+            tools:listitem="@layout/view_picture" />
+    </FrameLayout>
+</layout>

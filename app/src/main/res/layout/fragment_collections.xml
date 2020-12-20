@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.l3h4i15.unsplashclient.ui.collections.CollectionsViewModel" />
+
+        <variable
+            name="onRefreshListener"
+            type="androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener" />
+
+        <variable
+            name="onScrollListener"
+            type="androidx.recyclerview.widget.RecyclerView.OnScrollListener" />
+
+        <variable
+            name="adapter"
+            type="com.l3h4i15.unsplashclient.ui.collections.CollectionsRecyclerAdapter" />
+
+        <variable
+            name="decorator"
+            type="com.l3h4i15.unsplashclient.ui.decoration.LinearRecyclerItemDecorator" />
+    </data>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.collections.CollectionsFragment">
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:onRefreshListener="@{onRefreshListener}"
+            app:refreshing="@{viewModel.isRefreshing}">
+
+            <androidx.recyclerview.widget.RecyclerView
+                decorator="@{decorator}"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:adapter="@{adapter}"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:onScrollListener="@{onScrollListener}"
+                tools:listitem="@layout/view_collection" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </FrameLayout>
+</layout>

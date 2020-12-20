@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="picture"
+            type="com.l3h4i15.unsplashclient.model.content.Picture" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        style="@style/ContentedRecyclerItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/image"
+            resultUrl="@{picture.smallUrl}"
+            android:layout_width="@dimen/preview_image_size"
+            android:layout_height="0dp"
+            android:contentDescription="@{picture.description}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            style="@style/Username"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/item_inner_distance"
+            android:gravity="end"
+            android:text="@{picture.user.username}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/userAvatar"
+            app:layout_constraintStart_toEndOf="@id/image"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
+
+        <ImageView
+            android:id="@+id/userAvatar"
+            resultUrl="@{picture.user.smallAvatar}"
+            android:layout_width="@dimen/preview_avatar_size"
+            android:layout_height="0dp"
+            android:contentDescription="@{String.format(@string/user_avatar_content_description, picture.user.username)}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
