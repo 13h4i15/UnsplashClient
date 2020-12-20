@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="viewModel"
+            type="com.l3h4i15.unsplashclient.ui.search.SearchResultViewModel" />
+
+        <variable
+            name="onScrollListener"
+            type="androidx.recyclerview.widget.RecyclerView.OnScrollListener" />
+
+        <variable
+            name="adapter"
+            type="com.l3h4i15.unsplashclient.ui.search.SearchResultRecyclerAdapter" />
+
+        <variable
+            name="decorator"
+            type="com.l3h4i15.unsplashclient.ui.decoration.LinearRecyclerItemDecorator" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.search.SearchResultFragment">
+
+        <androidx.recyclerview.widget.RecyclerView
+            decorator="@{decorator}"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="@{viewModel.isResultsAvailable ? View.VISIBLE : View.GONE}"
+            app:adapter="@{adapter}"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:onScrollListener="@{onScrollListener}"
+            tools:listitem="@layout/view_picture_search_result" />
+
+        <TextView
+            style="@style/Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/item_inner_distance"
+            android:text="@string/no_search_results"
+            android:visibility="@{viewModel.isResultsAvailable ? View.GONE : View.VISIBLE}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
