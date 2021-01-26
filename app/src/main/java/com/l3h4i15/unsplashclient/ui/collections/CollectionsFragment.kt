@@ -1,14 +1,13 @@
 package com.l3h4i15.unsplashclient.ui.collections
 
 import android.os.Bundle
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
+import androidx.core.os.bundleOf
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
@@ -16,66 +15,55 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.l3h4i15.unsplashclient.R
-import com.l3h4i15.unsplashclient.application.UnsplashApp
+import com.l3h4i15.unsplashclient.db.repository.CollectionsRepository
 import com.l3h4i15.unsplashclient.databinding.FragmentCollectionsBinding
-import com.l3h4i15.unsplashclient.repository.obtain.ObtainCollectionsRepository
+import com.l3h4i15.unsplashclient.navigation.Navigation
+import com.l3h4i15.unsplashclient.navigation.add
+import com.l3h4i15.unsplashclient.ui.collectionpictures.CollectionPicturesFragment
 import com.l3h4i15.unsplashclient.ui.decoration.LinearRecyclerItemDecorator
-import com.l3h4i15.unsplashclient.ui.main.MainViewModel
-import com.l3h4i15.unsplashclient.ui.main.MainViewState
-import com.l3h4i15.unsplashclient.ui.main.NavigationViewState
+import com.l3h4i15.unsplashclient.ui.search.SearchResultFragment
 import com.l3h4i15.unsplashclient.util.diff.CollectionsDiffUtilCallback
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import javax.inject.Inject
 
-class CollectionsFragment : Fragment() {
-    @Inject
-    lateinit var obtainRepository: ObtainCollectionsRepository
-
-    @Inject
-    lateinit var factory: ViewModelProvider.Factory
-
-    @Inject
-    lateinit var compositeDisposable: CompositeDisposable
-
-    @Inject
-    lateinit var adapter: CollectionsRecyclerAdapter
-
-    @Inject
-    lateinit var decorator: LinearRecyclerItemDecorator
-
+class CollectionsFragment @Inject constructor(
+    private val factory: ViewModelProvider.Factory,
+    private val compositeDisposable: CompositeDisposable,
+    private val navigation: Navigation,
+    private val repository: CollectionsRepository,
+    private val adapter: CollectionsRecyclerAdapter,
+    private val decorator: LinearRecyclerItemDecorator
+) : Fragment() {
     private lateinit var binding: FragmentCollectionsBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_collections, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val unsplashApp = (requireActivity().application as UnsplashApp)
-        unsplashApp.appComponent.inject(this)
+        navigation.setTitle(R.string.collections_title)
 
         val viewModel by viewModels<CollectionsViewModel> { factory }
         binding.viewModel = viewModel
 
-        val activityViewModel by activityViewModels<MainViewModel> { factory }
-        activityViewModel.setViewState(MainViewState.Collections)
-        adapter.setOnCollectionClickListener {
-            unsplashApp.setupDetailedCollectionComponent(it)
-            activityViewModel.setNavigationState(NavigationViewState.COLLECTION_PICTURES)
-        }
-
+        binding.adapter = adapter
+        binding.decorator = decorator
         adapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 
-
-        obtainRepository.obtain()
+        repository.observe()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 val newCollections = adapter.collections.toMutableList()
@@ -87,8 +75,14 @@ class CollectionsFragment : Fragment() {
             }
             .addTo(compositeDisposable)
 
-        binding.adapter = adapter
-        binding.decorator = decorator
+        val layoutManager = LinearLayoutManager(requireContext())
+        binding.manager = layoutManager
+
+        adapter.setOnCollectionClickListener {
+            navigation.add<CollectionPicturesFragment>(
+                bundleOf(CollectionPicturesFragment.COLLECTION_ID_EXTRA to it.id)
+            )
+        }
 
         binding.onRefreshListener = SwipeRefreshLayout.OnRefreshListener {
             viewModel.onRefresh()
@@ -96,10 +90,7 @@ class CollectionsFragment : Fragment() {
 
         binding.onScrollListener = object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
-                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
-
-                if (lastVisibleItemPosition == adapter.itemCount - 1) {
+                if (layoutManager.findLastVisibleItemPosition() == adapter.itemCount - 1) {
                     viewModel.loadNextPage()
                 }
             }
@@ -118,6 +109,32 @@ class CollectionsFragment : Fragment() {
     override fun onDestroyView() {
         compositeDisposable.clear()
         super.onDestroyView()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.search_menu, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.search_menu_item -> {
+                val searchView = item.actionView as SearchView
+                searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean {
+                        if (query.isNullOrBlank()) return false
+                        navigation.add<SearchResultFragment>(bundleOf(SearchResultFragment.QUERY_EXTRA to query))
+                        item.collapseActionView()
+                        return true
+                    }
+
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        return false
+                    }
+                })
+                true
+            }
+            else -> false
+        }
     }
 
     companion object {

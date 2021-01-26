@@ -12,6 +12,10 @@
         <variable
             name="adapter"
             type="com.l3h4i15.unsplashclient.ui.collectionpictures.CollectionPicturesRecyclerAdapter" />
+
+        <variable
+            name="manager"
+            type="androidx.recyclerview.widget.GridLayoutManager" />
     </data>
 
     <FrameLayout
@@ -23,9 +27,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:adapter="@{adapter}"
-            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:layoutManager="@{manager}"
             app:onScrollListener="@{onScrollListener}"
-            app:spanCount="@integer/pictures_span_count"
             tools:listitem="@layout/view_picture" />
     </FrameLayout>
 </layout>

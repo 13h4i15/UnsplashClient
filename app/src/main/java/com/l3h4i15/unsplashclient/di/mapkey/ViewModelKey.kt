@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 @Target(
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_SETTER,
-    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_GETTER
 )
 @Retention(AnnotationRetention.RUNTIME)
 @MapKey

@@ -1,7 +1,7 @@
 package com.l3h4i15.unsplashclient.util.diff
 
 import androidx.recyclerview.widget.DiffUtil
-import com.l3h4i15.unsplashclient.model.content.Picture
+import com.l3h4i15.unsplashclient.model.Picture
 
 class PicturesDiffUtilCallback(
     private val oldList: List<Picture>,

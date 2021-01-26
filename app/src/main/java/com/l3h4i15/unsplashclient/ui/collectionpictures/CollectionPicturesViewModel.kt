@@ -3,21 +3,18 @@ package com.l3h4i15.unsplashclient.ui.collectionpictures
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.l3h4i15.unsplashclient.log.LogDataContract
-import com.l3h4i15.unsplashclient.model.content.Picture
-import com.l3h4i15.unsplashclient.repository.load.LoadCollectionPicturesPageRepository
+import com.l3h4i15.unsplashclient.model.Picture
+import com.l3h4i15.unsplashclient.network.repository.UnsplashApiRepository
 import com.l3h4i15.unsplashclient.util.disposeIfPossible
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.subjects.BehaviorSubject
 import io.reactivex.rxjava3.subjects.Subject
 import javax.inject.Inject
 
 class CollectionPicturesViewModel @Inject constructor(
-    private val repository: LoadCollectionPicturesPageRepository,
-    private val compositeDisposable: CompositeDisposable
+    private val repository: UnsplashApiRepository,
 ) : ViewModel() {
     private val picturesSubject = BehaviorSubject.create<List<Picture>>()
     val picturesObservable: Observable<List<Picture>>
@@ -28,21 +25,16 @@ class CollectionPicturesViewModel @Inject constructor(
         get() = toastSubject
 
     private var page: Int = 1
-
     private var disposable: Disposable? = null
 
-    init {
-        loadNextPage()
-    }
-
     override fun onCleared() {
-        compositeDisposable.clear()
+        dispose()
         super.onCleared()
     }
 
-    fun loadNextPage() {
-        disposable?.disposeIfPossible()
-        disposable = repository.load(page)
+    fun loadNextPage(id: Int) {
+        dispose()
+        disposable = repository.getCollectionPictures(id, page)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
                 val pictures = picturesSubject.value?.toMutableList() ?: mutableListOf()
@@ -55,6 +47,9 @@ class CollectionPicturesViewModel @Inject constructor(
                 Log.e(LogDataContract.Error.LOADING_ERROR_TAG, it.toString())
                 toastSubject.onNext(true)
             })
-            .addTo(compositeDisposable)
+    }
+
+    private fun dispose() {
+        disposable.disposeIfPossible()
     }
 }

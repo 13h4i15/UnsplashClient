@@ -13,18 +13,18 @@ interface Api {
     fun getRandom(): Single<PictureApiResponse>
 
     @GET("collections")
-    fun getCollectionsPage(@Query("page") page: Int): Single<List<CollectionApiResponse>>
+    fun getCollections(@Query("page") page: Int): Single<List<CollectionApiResponse>>
 
     @GET("collections/{id}/photos")
-    fun getCollectionPicturePage(@Path(value = "id") id: Int, @Query("page") page: Int):
+    fun getCollectionPictures(@Path(value = "id") id: Int, @Query("page") page: Int):
             Single<List<PictureApiResponse>>
 
     @GET("search/photos")
-    fun getSearchPicturesPage(@Query("query") query: String, @Query("page") page: Int):
+    fun getSearchPictures(@Query("query") query: String, @Query("page") page: Int):
             Single<SearchResultApiResponse>
 
     @GET("search/photos")
-    fun getSearchPicturesPage(
+    fun getSearchPictures(
         @Query("query") query: String,
         @Query("page") page: Int,
         @Query("collections") collectionId: Int

@@ -8,7 +8,7 @@
 
         <variable
             name="collection"
-            type="com.l3h4i15.unsplashclient.model.content.Collection" />
+            type="com.l3h4i15.unsplashclient.model.Collection" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

@@ -16,6 +16,10 @@
             type="androidx.recyclerview.widget.RecyclerView.OnScrollListener" />
 
         <variable
+            name="manager"
+            type="androidx.recyclerview.widget.LinearLayoutManager" />
+
+        <variable
             name="adapter"
             type="com.l3h4i15.unsplashclient.ui.search.SearchResultRecyclerAdapter" />
 
@@ -35,7 +39,7 @@
             android:layout_height="match_parent"
             android:visibility="@{viewModel.isResultsAvailable ? View.VISIBLE : View.GONE}"
             app:adapter="@{adapter}"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layoutManager="@{manager}"
             app:onScrollListener="@{onScrollListener}"
             tools:listitem="@layout/view_picture_search_result" />
 

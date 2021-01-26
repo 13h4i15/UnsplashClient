@@ -1,53 +1,52 @@
 package com.l3h4i15.unsplashclient.ui.collectionpictures
 
 import android.os.Bundle
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.widget.SearchView
+import androidx.core.os.bundleOf
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.l3h4i15.unsplashclient.R
-import com.l3h4i15.unsplashclient.application.UnsplashApp
+import com.l3h4i15.unsplashclient.db.repository.CollectionsRepository
 import com.l3h4i15.unsplashclient.databinding.FragmentCollectionPicturesBinding
-import com.l3h4i15.unsplashclient.model.content.Collection
-import com.l3h4i15.unsplashclient.ui.main.MainViewModel
-import com.l3h4i15.unsplashclient.ui.main.MainViewState
-import com.l3h4i15.unsplashclient.ui.main.NavigationViewState
+import com.l3h4i15.unsplashclient.navigation.Navigation
+import com.l3h4i15.unsplashclient.navigation.add
+import com.l3h4i15.unsplashclient.ui.detailed.DetailedPictureFragment
+import com.l3h4i15.unsplashclient.ui.search.SearchResultFragment
 import com.l3h4i15.unsplashclient.util.diff.PicturesDiffUtilCallback
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
+import io.reactivex.rxjava3.schedulers.Schedulers
 import javax.inject.Inject
 
-
-class CollectionPicturesFragment : Fragment() {
-    @Inject
-    lateinit var factory: ViewModelProvider.Factory
-
-    @Inject
-    lateinit var adapter: CollectionPicturesRecyclerAdapter
-
-    @Inject
-    lateinit var collection: Collection
-
-    @Inject
-    lateinit var compositeDisposable: CompositeDisposable
-
-    private val unsplashApp: UnsplashApp by lazy { requireActivity().application as UnsplashApp }
-
+class CollectionPicturesFragment @Inject constructor(
+    private val factory: ViewModelProvider.Factory,
+    private val collectionsRepository: CollectionsRepository,
+    private val navigation: Navigation,
+    private val compositeDisposable: CompositeDisposable,
+    private val adapter: CollectionPicturesRecyclerAdapter
+) : Fragment() {
     private lateinit var binding: FragmentCollectionPicturesBinding
 
+    private val collectionId: Int by lazy {
+        arguments?.getInt(COLLECTION_ID_EXTRA) ?: throw IllegalStateException()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         binding = DataBindingUtil.inflate(
             inflater, R.layout.fragment_collection_pictures, container, false
         )
@@ -57,18 +56,27 @@ class CollectionPicturesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val component = unsplashApp.detailedCollectionComponent ?: return
-        component.inject(this)
-        val viewModel by viewModels<CollectionPicturesViewModel> { factory }
-        val activityViewModel by activityViewModels<MainViewModel> { factory }
+        collectionsRepository.get(collectionId)
+            .subscribeOn(Schedulers.io())
+            .subscribe({
+                navigation.setTitle(it.title)
+            }, {})
 
-        activityViewModel.setViewState(MainViewState.Pictures(collection))
-        adapter.setOnPictureClickListener {
-            unsplashApp.setupDetailedPictureComponent(it)
-            activityViewModel.setNavigationState(NavigationViewState.DETAILED)
-        }
+        val viewModel by viewModels<CollectionPicturesViewModel> { factory }
+        if (savedInstanceState == null) viewModel.loadNextPage(collectionId)
+
+        binding.adapter = adapter
         adapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        val layoutManager =
+            GridLayoutManager(requireContext(), resources.getInteger(R.integer.pictures_span_count))
+        binding.manager = layoutManager
+
+        adapter.setOnPictureClickListener {
+            navigation.add<DetailedPictureFragment>(
+                bundleOf(DetailedPictureFragment.PICTURE to it)
+            )
+        }
 
         viewModel.picturesObservable
             .subscribe {
@@ -79,14 +87,10 @@ class CollectionPicturesFragment : Fragment() {
             }
             .addTo(compositeDisposable)
 
-        binding.adapter = adapter
         binding.onScrollListener = object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
-                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
-
-                if (lastVisibleItemPosition == adapter.itemCount - 1) {
-                    viewModel.loadNextPage()
+                if (layoutManager.findLastVisibleItemPosition() == adapter.itemCount - 1) {
+                    viewModel.loadNextPage(collectionId)
                 }
             }
         }
@@ -106,8 +110,38 @@ class CollectionPicturesFragment : Fragment() {
         super.onDestroyView()
     }
 
-    override fun onDestroy() {
-        if (!requireActivity().isChangingConfigurations) unsplashApp.freeDetailedCollectionComponent()
-        super.onDestroy()
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.search_menu, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.search_menu_item -> {
+                val searchView = item.actionView as SearchView
+                searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean {
+                        if (query.isNullOrBlank()) return false
+                        navigation.add<SearchResultFragment>(
+                            bundleOf(
+                                SearchResultFragment.QUERY_EXTRA to query,
+                                SearchResultFragment.COLLECTION_ID_EXTRA to collectionId
+                            )
+                        )
+                        item.collapseActionView()
+                        return true
+                    }
+
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        return false
+                    }
+                })
+                true
+            }
+            else -> false
+        }
+    }
+
+    companion object {
+        const val COLLECTION_ID_EXTRA = "id"
     }
 }

@@ -8,10 +8,6 @@
         <variable
             name="onNavigationClickListener"
             type="android.view.View.OnClickListener" />
-
-        <variable
-            name="viewModel"
-            type="com.l3h4i15.unsplashclient.ui.main.MainViewModel" />
     </data>
 
     <LinearLayout

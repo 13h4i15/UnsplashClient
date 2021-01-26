@@ -1,7 +1,7 @@
 package com.l3h4i15.unsplashclient.util.diff
 
 import androidx.recyclerview.widget.DiffUtil
-import com.l3h4i15.unsplashclient.model.content.Collection
+import com.l3h4i15.unsplashclient.model.Collection
 
 class CollectionsDiffUtilCallback(
     private val oldList: List<Collection>,

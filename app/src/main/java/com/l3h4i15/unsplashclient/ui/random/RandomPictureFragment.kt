@@ -8,35 +8,30 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import com.l3h4i15.unsplashclient.R
-import com.l3h4i15.unsplashclient.application.UnsplashApp
 import com.l3h4i15.unsplashclient.databinding.FragmentRandomPictureBinding
-import com.l3h4i15.unsplashclient.ui.main.MainViewModel
-import com.l3h4i15.unsplashclient.ui.main.MainViewState
-import com.l3h4i15.unsplashclient.ui.main.NavigationViewState
+import com.l3h4i15.unsplashclient.navigation.Navigation
+import com.l3h4i15.unsplashclient.navigation.newRootFragment
+import com.l3h4i15.unsplashclient.ui.collections.CollectionsFragment
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import javax.inject.Inject
 
-class RandomPictureFragment : Fragment() {
-
-    @Inject
-    lateinit var factory: ViewModelProvider.Factory
-
-    @Inject
-    lateinit var compositeDisposable: CompositeDisposable
-
+class RandomPictureFragment @Inject constructor(
+    private val factory: ViewModelProvider.Factory,
+    private val compositeDisposable: CompositeDisposable,
+    private val navigation: Navigation
+) : Fragment() {
     private lateinit var binding: FragmentRandomPictureBinding
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_random_picture, container, false)
         return binding.root
@@ -44,19 +39,14 @@ class RandomPictureFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        navigation.setTitle(R.string.random_picture_title)
 
-        (requireActivity().application as UnsplashApp).appComponent.inject(this)
-
-        val activityViewModel by activityViewModels<MainViewModel> { factory }
-
-        activityViewModel.setViewState(MainViewState.Random)
         binding.onClickLister = View.OnClickListener {
-            activityViewModel.setNavigationState(NavigationViewState.COLLECTIONS)
+            navigation.newRootFragment<CollectionsFragment>()
         }
 
         val viewModel by viewModels<RandomPictureViewModel> { factory }
         binding.viewModel = viewModel
-
         viewModel.messageObservable
             .filter { it }
             .subscribe {

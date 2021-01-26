@@ -9,21 +9,21 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.l3h4i15.unsplashclient.R
 import com.l3h4i15.unsplashclient.databinding.ViewCollectionBinding
-import com.l3h4i15.unsplashclient.listener.OnCollectionClickListener
-import com.l3h4i15.unsplashclient.model.content.Collection
+import com.l3h4i15.unsplashclient.listener.OnCollectionClick
+import com.l3h4i15.unsplashclient.model.Collection
 import javax.inject.Inject
 
 class CollectionsRecyclerAdapter @Inject constructor() :
     RecyclerView.Adapter<CollectionsRecyclerAdapter.ViewHolder>() {
-    private val data: MutableList<Collection> = mutableListOf()
+    private val _collections: MutableList<Collection> = mutableListOf()
     var collections: List<Collection>
-        get() = data
+        get() = _collections
         set(value) {
-            data.clear()
-            data.addAll(value)
+            _collections.clear()
+            _collections.addAll(value)
         }
 
-    private var clickListener: OnCollectionClickListener? = null
+    private var onClick: OnCollectionClick = {}
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -34,25 +34,22 @@ class CollectionsRecyclerAdapter @Inject constructor() :
 
         val holder = ViewHolder(binding)
 
-        binding.root.setOnClickListener {
-            clickListener?.onClick(data[holder.layoutPosition])
-        }
+        binding.root.setOnClickListener { onClick(collections[holder.layoutPosition]) }
 
         return holder
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.binding.collection = data[position]
+        holder.binding.collection = collections[position]
     }
 
-    override fun getItemCount() = data.size
+    override fun getItemCount() = collections.size
 
-    fun setOnCollectionClickListener(clickListener: OnCollectionClickListener) {
-        this.clickListener = clickListener
+    fun setOnCollectionClickListener(onCollectionClick: OnCollectionClick) {
+        onClick = onCollectionClick
     }
 
     class ViewHolder(val binding: ViewCollectionBinding) : RecyclerView.ViewHolder(binding.root) {
-
         companion object {
             @JvmStatic
             @BindingAdapter("collectionUrl")

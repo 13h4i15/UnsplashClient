@@ -8,33 +8,20 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.l3h4i15.unsplashclient.R
-import com.l3h4i15.unsplashclient.application.UnsplashApp
 import com.l3h4i15.unsplashclient.databinding.FragmentDetailedPictureBinding
-import com.l3h4i15.unsplashclient.model.content.Picture
-import com.l3h4i15.unsplashclient.ui.main.MainViewModel
-import com.l3h4i15.unsplashclient.ui.main.MainViewState
+import com.l3h4i15.unsplashclient.navigation.Navigation
 import javax.inject.Inject
 
-class DetailedPictureFragment : Fragment() {
-    @Inject
-    lateinit var factory: ViewModelProvider.Factory
-
-    @Inject
-    lateinit var picture: Picture
-
-    private val unsplashApp: UnsplashApp by lazy { requireActivity().application as UnsplashApp }
+class DetailedPictureFragment @Inject constructor(private val navigation: Navigation) : Fragment() {
 
     private lateinit var binding: FragmentDetailedPictureBinding
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_detailed_picture, container, false)
         return binding.root
@@ -42,14 +29,9 @@ class DetailedPictureFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        navigation.setTitle(R.string.detailed_picture_title)
 
-        val component = unsplashApp.detailedPictureComponent ?: return
-        component.inject(this)
-
-        val activityViewModel by activityViewModels<MainViewModel> { factory }
-        activityViewModel.setViewState(MainViewState.Detailed)
-
-        binding.picture = picture
+        binding.picture = arguments?.getParcelable(PICTURE) ?: throw IllegalStateException()
 
         val sheetBehavior = BottomSheetBehavior.from(binding.contentLayout)
         sheetBehavior.isFitToContents = true
@@ -65,12 +47,9 @@ class DetailedPictureFragment : Fragment() {
         }
     }
 
-    override fun onDestroy() {
-        if (!requireActivity().isChangingConfigurations) unsplashApp.freeDetailedPictureComponent()
-        super.onDestroy()
-    }
-
     companion object {
+        const val PICTURE = "picture"
+
         @JvmStatic
         @BindingAdapter("detailedUrl")
         fun setUrl(view: ImageView, url: String?) {

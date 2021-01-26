@@ -11,7 +11,7 @@
 
         <variable
             name="picture"
-            type="com.l3h4i15.unsplashclient.model.content.Picture" />
+            type="com.l3h4i15.unsplashclient.model.Picture" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout

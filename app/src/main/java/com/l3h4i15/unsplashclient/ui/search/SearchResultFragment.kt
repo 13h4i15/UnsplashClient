@@ -6,48 +6,39 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.l3h4i15.unsplashclient.R
-import com.l3h4i15.unsplashclient.application.UnsplashApp
 import com.l3h4i15.unsplashclient.databinding.FragmentSearchResultBinding
+import com.l3h4i15.unsplashclient.navigation.Navigation
+import com.l3h4i15.unsplashclient.navigation.add
 import com.l3h4i15.unsplashclient.ui.decoration.LinearRecyclerItemDecorator
-import com.l3h4i15.unsplashclient.ui.main.MainViewModel
-import com.l3h4i15.unsplashclient.ui.main.MainViewState
-import com.l3h4i15.unsplashclient.ui.main.NavigationViewState
+import com.l3h4i15.unsplashclient.ui.detailed.DetailedPictureFragment
 import com.l3h4i15.unsplashclient.util.diff.PicturesDiffUtilCallback
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import javax.inject.Inject
 
-class SearchResultFragment : Fragment() {
-    @Inject
-    lateinit var factory: ViewModelProvider.Factory
-
-    @Inject
-    lateinit var adapter: SearchResultRecyclerAdapter
-
-    @Inject
-    lateinit var decorator: LinearRecyclerItemDecorator
-
-    @Inject
-    lateinit var compositeDisposable: CompositeDisposable
+class SearchResultFragment @Inject constructor(
+    private val factory: ViewModelProvider.Factory,
+    private val navigation: Navigation,
+    private val compositeDisposable: CompositeDisposable,
+    private val adapter: SearchResultRecyclerAdapter,
+    private val decorator: LinearRecyclerItemDecorator
+) : Fragment() {
 
     private lateinit var binding: FragmentSearchResultBinding
 
-    private val unsplashApp: UnsplashApp by lazy { requireActivity().application as UnsplashApp }
-
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_search_result, container, false)
         return binding.root
@@ -55,21 +46,18 @@ class SearchResultFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        navigation.setTitle(R.string.search_result_title)
 
-        val component = unsplashApp.searchComponent ?: return
-        component.inject(this)
+        val query = arguments?.getString(QUERY_EXTRA) ?: throw IllegalStateException()
+        val id = arguments?.getInt(COLLECTION_ID_EXTRA)
+        val viewModel by viewModels<SearchResultViewModel> { factory }
+        if (savedInstanceState == null) viewModel.loadNextPage(query, id)
 
-        val activityViewModel by activityViewModels<MainViewModel> { factory }
-        activityViewModel.setViewState(MainViewState.Search)
-        adapter.setOnPictureClickListener {
-            unsplashApp.setupDetailedPictureComponent(it)
-            activityViewModel.setNavigationState(NavigationViewState.DETAILED)
-        }
+        binding.viewModel = viewModel
+        binding.adapter = adapter
+        binding.decorator = decorator
         adapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-
-        val viewModel by viewModels<SearchResultViewModel> { factory }
-        binding.viewModel = viewModel
 
         viewModel.picturesObservable
             .subscribe {
@@ -80,15 +68,19 @@ class SearchResultFragment : Fragment() {
             }
             .addTo(compositeDisposable)
 
-        binding.adapter = adapter
-        binding.decorator = decorator
+        val layoutManager = LinearLayoutManager(requireContext())
+        binding.manager = layoutManager
+
+        adapter.setOnPictureClickListener {
+            navigation.add<DetailedPictureFragment>(
+                bundleOf(DetailedPictureFragment.PICTURE to it)
+            )
+        }
+
         binding.onScrollListener = object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
-                val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
-
-                if (lastVisibleItemPosition == adapter.itemCount - 1) {
-                    viewModel.loadNextPage()
+                if (layoutManager.findLastVisibleItemPosition() == adapter.itemCount - 1) {
+                    viewModel.loadNextPage(query, id)
                 }
             }
         }
@@ -103,12 +95,15 @@ class SearchResultFragment : Fragment() {
             .addTo(compositeDisposable)
     }
 
-    override fun onDestroy() {
-        if (!requireActivity().isChangingConfigurations) unsplashApp.freeSearchComponent()
-        super.onDestroy()
+    override fun onDestroyView() {
+        compositeDisposable.clear()
+        super.onDestroyView()
     }
 
     companion object {
+        const val QUERY_EXTRA = "query"
+        const val COLLECTION_ID_EXTRA = "id"
+
         @JvmStatic
         @BindingAdapter("decorator")
         fun addDecorator(view: RecyclerView, decorator: LinearRecyclerItemDecorator) {
