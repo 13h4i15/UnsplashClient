@@ -1,8 +1,10 @@
 package com.l3h4i15.unsplashclient.di.module.app
 
+import android.app.Application
 import androidx.fragment.app.FragmentFactory
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.l3h4i15.unsplashclient.application.UnsplashApp
 import com.l3h4i15.unsplashclient.converter.entity.EntityConverter
 import com.l3h4i15.unsplashclient.converter.response.ApiConverter
 import com.l3h4i15.unsplashclient.converter.entity.CollectionRelationConverter
@@ -31,7 +33,9 @@ import com.l3h4i15.unsplashclient.network.model.user.UserResponse
 import com.l3h4i15.unsplashclient.network.repository.UnsplashApiRepository
 import com.l3h4i15.unsplashclient.network.repository.UnsplashApiRepositoryImpl
 import com.l3h4i15.unsplashclient.ui.collectionpictures.CollectionPicturesViewModel
+import com.l3h4i15.unsplashclient.ui.detailed.DetailedPictureViewModel
 import com.l3h4i15.unsplashclient.ui.main.MainActivity
+import com.l3h4i15.unsplashclient.ui.main.MainViewModel
 import com.l3h4i15.unsplashclient.ui.search.SearchResultViewModel
 import dagger.Binds
 import dagger.Module
@@ -44,6 +48,9 @@ abstract class AppModule {
     @ActivityScope
     @ContributesAndroidInjector(modules = [ActivityModule::class, NavigationModule::class])
     abstract fun contributeMainActivity(): MainActivity
+
+    @Binds
+    abstract fun bindApplication(application: UnsplashApp): Application
 
     // Fragments
     @Binds
@@ -72,6 +79,16 @@ abstract class AppModule {
     @IntoMap
     @ViewModelKey(SearchResultViewModel::class)
     abstract fun bindSearchResultViewModel(viewModel: SearchResultViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(DetailedPictureViewModel::class)
+    abstract fun bindDetailedPictureViewModel(viewModel: DetailedPictureViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(MainViewModel::class)
+    abstract fun bindMainViewModel(viewModel: MainViewModel): ViewModel
 
     // Repositories
     @Binds

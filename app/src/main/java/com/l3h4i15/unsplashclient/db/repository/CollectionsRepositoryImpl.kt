@@ -25,8 +25,8 @@ class CollectionsRepositoryImpl @Inject constructor(
 
     override fun observe(): Observable<List<Collection>> = observable
 
-    override fun get(id: Int): Single<Collection> =
-        dao.selectCollection(id).map { converter.convertSource(it) }
+    override fun get(id: Int): Single<Collection> = dao.selectCollection(id)
+        .map { converter.convertSource(it) }
 
     override fun save(collections: List<Collection>) {
         database.runInTransaction {

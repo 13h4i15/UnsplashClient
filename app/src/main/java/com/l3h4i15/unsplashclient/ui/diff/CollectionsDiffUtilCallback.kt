@@ -1,11 +1,11 @@
-package com.l3h4i15.unsplashclient.util.diff
+package com.l3h4i15.unsplashclient.ui.diff
 
 import androidx.recyclerview.widget.DiffUtil
-import com.l3h4i15.unsplashclient.model.Picture
+import com.l3h4i15.unsplashclient.model.Collection
 
-class PicturesDiffUtilCallback(
-    private val oldList: List<Picture>,
-    private val newList: List<Picture>
+class CollectionsDiffUtilCallback(
+    private val oldList: List<Collection>,
+    private val newList: List<Collection>
 ) : DiffUtil.Callback() {
 
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
